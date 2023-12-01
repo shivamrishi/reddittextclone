@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to browseX</title>
+    <style>
+        .post {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        	
+        }
+        .post-title {
+            font-size: 44px;
+            font-weight: bold;
+        }
+        .post-content {
+            font-size: 28px;
+        }
+        .post-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .comment-form {
+            margin-top: 8px;
+        }
+        a{
+        	text-decoration: none;
+        	color: black;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Welcome to browseX</h1>
+
+<div th:if="${#strings.isEmpty(user_name)}">
+
+<button onclick="redirectToLogin()">login :)</button>
+
+
+<script>
+    function redirectToLogin() {
+        window.location.href = '/user/test';
+    }
+</script>
+
+</div>
+
+<button onclick="loadFeed()">load!</button>
+
+<div th:unless="${#strings.isEmpty(user_name)}">
+<td th:text="${'Welcome' + user_name}"></td>
+
+<button onclick="redirectToCreateNew()">Create New Post!</button>
+
+<button onclick="testUser()">test!</button>
+
+
+<script>
+    function redirectToCreateNew() {
+        window.location.href = '/user/createNew';
+    }
+    
+    
+    function testUser(){
+    	fetch('/t2', {
+            method: 'GET'
+        }).then(response => response.json())
+        .then(data => console.log(data));
+  		  	
+    }
+    
+</script>
+ 
+</div>
+
+
+<div id="postContainer">
+
+    <!-- The dynamically created post will be appended here -->
+</div>
+
+<script>
+
+
+
+function addPostToContainer(postDetails) {
+    // Create the main container anchor element
+    var postAnchor = document.createElement("a");
+    postAnchor.href = "/post?id=" + postDetails.id; // Replace with actual URL
+    
+    // Create and configure the main post div
+    var postDiv = document.createElement("div");
+    postDiv.classList.add("post");
+    
+    // Create and configure the title div
+    var titleDiv = document.createElement("div");
+    titleDiv.classList.add("post-title");
+    titleDiv.textContent = postDetails.title;
+    postDiv.appendChild(titleDiv);
+    
+    // Create and configure the content div
+    var contentDiv = document.createElement("div");
+    contentDiv.classList.add("post-content");
+    contentDiv.textContent = postDetails.content;
+    postDiv.appendChild(contentDiv);
+    
+    // Create and configure the meta div
+    var metaDiv = document.createElement("div");
+    metaDiv.classList.add("post-meta");
+    
+    var creationTimeSpan = document.createElement("span");
+    creationTimeSpan.textContent = "Created on: " + postDetails.creationTime;
+    metaDiv.appendChild(creationTimeSpan);
+    
+    postDiv.appendChild(metaDiv);
+    
+    // Append the post div to the anchor element
+    postAnchor.appendChild(postDiv);
+    
+    // Append the complete anchor element to the specified container
+    var postContainer = document.getElementById("postContainer");
+    postContainer.appendChild(postAnchor);
+}
+
+function loadFeed(){
+	var page = 0;
+	var count = 10;
+	
+	var url = '/feed?' + 'page='+page + '&p-count='+count;
+	console.log(url);
+	fetch(url, {
+        method: 'GET'
+    }).then(response => response.json())
+    .then(data => data.content)
+    .then(content => {
+    	for(var i = 0; i< content.length; i++){
+    		addPostToContainer(content[i]);
+    	}
+    });
+		  	
+}
+
+
+</script>
+
+</body>
+</html> 

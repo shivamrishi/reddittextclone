@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BrowseX post</title>
+    <style>
+        .post {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .post-title {
+            font-size: 44px;
+            font-weight: bold;
+        }
+        .post-content {
+            font-size: 28px;
+        }
+        .post-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .comment-form {
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"> </script>
+<script src="notify.js" type="text/javascript"></script>
+
+<div class="post">
+	
+    <div class="post-title" th:text="${postDetails.title}"></div>
+    <div class="post-content" th:text="${postDetails.content}"></div>
+    <div class="post-meta">
+        Created on: <span th:text="${postDetails.creationTime}"></span>
+    </div>
+    <br>
+    <form class="comment-form">
+        <label for="comment">Add Comment:</label>
+        <textarea id="comment" name="comment" rows="1" cols="40"></textarea><br>
+        <br>
+        <button type="button" onclick="saveComment()">Add Comment</button>
+        <br>
+        <br>
+        <label for="tag">Save Tag:</label>
+        <input type="text" id="tag" name="tag"><br>
+        <button type="button" onclick="saveTag()">Save Tag</button>
+        <br>
+        <br>
+        <label for="reactions">Reactions:</label>
+        <select id="reactions" name="reactions">
+             <option value="like">Like</option>
+            <option value="dislike">Dislike</option>
+        </select>
+        <button type="button" onclick="saveReaction()">Save Reaction</button>
+        <br>
+        <br>
+        <input type="hidden" id="postid" th:value="${postDetails.id}"> 
+        <input type="hidden" id="userid" th:value="${userId}"> 
+        <input type="hidden" id="csrfToken" th:value="${_csrf.token}"> <!-- Include the CSRF token -->
+    </form>
+	    
+</div>
+
+
+<script>
+
+	function issueNotification(InteractionValue){
+		console.log("issuing notif");
+		console.log(InteractionValue);
+		str = "";
+		elem = "";
+		if(InteractionValue=="COMMENT"){
+			str="Added comment!";
+			elem = "comment";
+		}
+		else if(InteractionValue=="SAVE_TAG_TO_FEED"){
+			str = "Saved tag to your feed!";
+			elem= "tag";
+		}
+		else if(InteractionValue=="REACTION"){
+			str = "Added your reaction!";
+			elem = "reactions";
+		}
+		else{
+			
+		}
+		console.log(str);
+		elem = '.comment-form #'+ elem;
+		console.log(elem);
+		$(elem).notify(str, "info");
+	}
+	
+	function InteractionFactory(typeV, d){
+		var interaction = {
+				interactionValue: typeV,
+				data: d
+		};
+		return interaction;
+	}
+
+    function saveComment() {
+    	var form = document.getElementsByClassName("comment-form")[0];
+    	var data = form.comment.value;
+    	return saveInteraction(InteractionFactory(0, data));
+    }
+    
+    function saveTag() {
+    	var form = document.getElementsByClassName("comment-form")[0];
+    	var data = form.tag.value;
+    	return saveInteraction(InteractionFactory(1, data));
+    }
+    
+    function saveReaction(){
+    	var form = document.getElementsByClassName("comment-form")[0];
+    	var data = form.reactions.value;
+    	return saveInteraction(InteractionFactory(2, data));
+    }
+    
+    function saveInteraction(interaction){
+		var csrfToken = document.getElementById("csrfToken").value; // Get the CSRF token
+        var postid = document.getElementById("postid").value;
+        var userid = document.getElementById("userid").value;
+        
+        var url = '/user/Interact';
+        var headers = {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken ,
+            'postid': postid,
+            'userid': userid
+        };
+
+        fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(interaction),
+            redirect: 'follow'
+        }).then(response => {
+            // HTTP 301 response
+            // HOW CAN I FOLLOW THE HTTP REDIRECT RESPONSE?
+            if (response.redirected) {
+                window.location.href = response.url;
+            }
+            console.log("checking redir");
+        	return response;
+        }).then(response => response.json())
+        .then(data => {
+            if (data) {
+            	console.log(data);
+                // Server returned a valid ID, enable upload section
+            	issueNotification(data.interactionValue);
+              } else {
+                // Server did not return a valid ID, show error message or handle accordingly
+                console.log('Error: Invalid response from server');
+              }
+            })
+            .catch(error => {
+              console.log('Error:', error);
+            });
+        
+     
+    }
+    
+</script>
+
+</body>
+</html>

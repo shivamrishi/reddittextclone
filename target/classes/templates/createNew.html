@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create New Post!</title>
+</head>
+<body>
+
+<form id="createForm">
+
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" placeholder="Sample Title" required><br><br>
+    
+    <label for="content">Content:</label>
+    <textarea id="content" name="content" rows="4" cols="50" required>Sample Content</textarea><br><br>
+     
+    <label for="tag">Tag:</label>
+    <input type="text" id="tag" name="tag" placeholder="Sample Tag" required><br><br>
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"> <!-- Include the CSRF token -->
+    
+    <button type="button" onclick="createNewPost()">Create Post!</button>
+
+</form>
+
+<script>
+    function createNewPost() {
+        var form = document.getElementById("createForm");
+        t = new Date();
+        console.log(t);
+        var post = {
+            title: form.title.value,
+            content: form.content.value,
+            creationTime: t,
+            tag: form.tag.value
+        };
+        var csrfToken = document.getElementById("csrfToken").value; // Get the CSRF token
+        
+        var url = '/user/createNew';
+        var headers = {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken 
+        };
+        
+        fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(post),
+            redirect: 'follow'
+        }).then(response => {
+            // HTTP 301 response
+            // HOW CAN I FOLLOW THE HTTP REDIRECT RESPONSE?
+            if (response.redirected) {
+                window.location.href = response.url;
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
